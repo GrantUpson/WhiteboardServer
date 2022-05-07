@@ -8,43 +8,34 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Whiteboard implements IWhiteboard {
-    private ArrayList<IClientConnection> connections;
-    private List<String> usernames;
-    private int messagesSent = 0;
+public class Whiteboard extends UnicastRemoteObject implements IWhiteboard {
+    List<ClientCallbackInterface> clients;
 
     public Whiteboard() throws RemoteException {
-        usernames = new ArrayList<>();
-        usernames.add("Anguish");
-        usernames.add("Sorcery");
+        clients = new ArrayList<>();
     }
 
     @Override
-    public void login(IClientConnection client) throws RemoteException {
-        System.out.println("Client connected!");
-        connections.add(client);
-        usernames.add(client.getUsername());
+    public void register(ClientCallbackInterface client) throws RemoteException {
+        clients.add(client);
+        System.out.println("Client " + client.getUsername() + " registered.");
     }
 
     @Override
-    public void logout(IClientConnection client) throws RemoteException {
-        usernames.remove(client.getUsername());
+    public void unregister(ClientCallbackInterface client) throws RemoteException {
+        clients.remove(client);
+        System.out.println("Client " + client.getUsername() + " unregistered.");
     }
 
     @Override
-    public void sendMessage(String message) throws RemoteException {
-        for(IClientConnection c : connections) {
-            c.sendMessage("Message from server");
+    public List<ClientCallbackInterface> getClients() throws RemoteException {
+        return clients;
+    }
+
+    @Override
+    public void broadcastMessage(String message) throws RemoteException {
+        for(ClientCallbackInterface client: clients) {
+            client.message(message);
         }
-    }
-
-    @Override
-    public List<String> getUsernames() throws RemoteException {
-        return usernames;
-    }
-
-    @Override
-    public int messagesSent() throws RemoteException {
-        return messagesSent;
     }
 }
