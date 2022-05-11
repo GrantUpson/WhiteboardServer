@@ -1,3 +1,8 @@
+/*
+ * Name: Grant Upson
+ * ID: 1225133
+ */
+
 import java.awt.*;
 import java.rmi.Remote;
 import java.rmi.RemoteException;

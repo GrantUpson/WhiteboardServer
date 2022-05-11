@@ -4,12 +4,11 @@
  */
 
 import com.formdev.flatlaf.FlatDarkLaf;
-
 import javax.swing.*;
 import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
 
-//TODO rmiregistry 1099
+
 public class Launcher {
     private static final int NUM_ARGUMENTS = 3;
     private static final String INCORRECT_ARGUMENTS_RESPONSE =
