@@ -8,7 +8,7 @@ import java.rmi.RemoteException;
 import java.util.List;
 
 
-public interface ClientCallbackInterface extends Remote {
+public interface IClientCallback extends Remote {
     void onConnectionAccepted() throws RemoteException;
     void synchronizeCurrentUsers(List<String> users) throws RemoteException;
     void synchronizeDrawables(List<IDrawable> drawables) throws RemoteException;
