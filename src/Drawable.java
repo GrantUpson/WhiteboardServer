@@ -20,9 +20,7 @@ public class Drawable extends UnicastRemoteObject implements IDrawable {
         this.colour = colour;
         this.text = text;
 
-        if(text == null) {
-            isShape = true;
-        }
+        if(text == null) { isShape = true; }
     }
 
     @Override

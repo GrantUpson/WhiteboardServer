@@ -15,6 +15,5 @@ public interface IClientCallback extends Remote {
     String getUsername() throws RemoteException;
     void sendDrawable(IDrawable drawable) throws RemoteException;
     void sendChatMessage(String message) throws RemoteException;
-    void onKick(String message) throws RemoteException;
-    void onServerShutdown(String message) throws RemoteException;
+    void onForcedDisconnect(String message) throws RemoteException;
 }

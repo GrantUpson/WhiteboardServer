@@ -10,19 +10,33 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 
 public class GUI extends JFrame implements Runnable {
-    private static final String EMPTY_STRING_MESSAGE = "You cannot send an empty chat message.";
+    private static final String SERVER_TITLE = "Whiteboard Server";
+    private static final String SERVER_SHUTDOWN_MESSAGE = "The whiteboard server has been shutdown";
+    private static final String EMPTY_STRING_MESSAGE = "You cannot send an empty chat message";
+    private static final String CLEAR_WHITEBOARD_MESSAGE = "The whiteboard has been cleared";
+    private static final String KICKED_MESSAGE = "You have been kicked from the whiteboard server";
+    private static final String USER_CONNECTED_MESSAGE = "Has connected";
+    private static final String USER_DISCONNECTED_MESSAGE = "Has disconnected";
+    private static final String NOTIFY_CHAT_USER_KICKED_MESSAGE = "Has been kicked from the server";
     private static final int SHAPE_OFFSET = 35;
 
     private Map<String, Color> colours;
-    private final IWhiteboardServer server;
-    private final IClientCallback client;
-    private boolean connectionAccepted;
+    private final List<IClientCallback> clientConnections;
+    private final List<IClientCallback> pendingConnections;
+    private final String username;
+    private final Registry registry;
+    private final Server server;
 
     private JPanel guiPanel;
     private JTextField sendMessageField;
@@ -33,77 +47,41 @@ public class GUI extends JFrame implements Runnable {
     private JComboBox<String> shapeSelector;
     private JComboBox<String> colourSelector;
     private JTextField textToDraw;
-    private JButton disconnectButton;
     private JList<Object> connectedUsers;
     private JLabel connectedUsersLabel;
     private JScrollPane connectedUsersScrollbar;
     private final WhiteboardCanvas canvas;
+    private JMenuBar menuBar;
+    private JMenu menuDropdown;
+    private JMenuItem newWhiteboard;
+    private JMenuItem openWhiteboard;
+    private JMenuItem saveWhiteboard;
+    private JMenuItem saveAsWhiteboard;
+    private JMenuItem closeWhiteboard;
+    private JLabel pendingUsersLabel;
+    private JList<Object> pendingConnectionsList;
+    private JScrollPane pendingConnectionsPane;
 
-    public GUI(IWhiteboardServer server, IClientCallback client) {
+    public GUI(String username, Registry registry, Server server) throws RemoteException {
+        this.username = username;
+        this.registry = registry;
         this.server = server;
-        this.client = client;
+
+        clientConnections = new CopyOnWriteArrayList<>();
+        pendingConnections = new CopyOnWriteArrayList<>();
         canvas = new WhiteboardCanvas();
-        connectionAccepted = false;
 
         initializeColourSelector();
         createShapeSelector();
+        initializeListeners();
+        synchronizeConnectedUsers();
 
-        canvas.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                super.mousePressed(e);
-                try {
-                    if(shapeSelector.getSelectedItem() == "Text") {
-                        server.sendDrawable(new Drawable(null, colours.get((String)colourSelector.getSelectedItem()),
-                                new WhiteboardText(textToDraw.getText(), e.getX(), e.getY())));
-                    } else {
-                        server.sendDrawable(new Drawable(getSelectedShape(e.getX() - SHAPE_OFFSET,
-                                e.getY() - SHAPE_OFFSET), colours.get((String)colourSelector.getSelectedItem()), null));
-                    }
-                } catch(RemoteException ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
-
-        disconnectButton.addActionListener(e -> {
-            try {
-                exitApplication();
-            } catch(RemoteException ex) {
-                ex.printStackTrace();
-            }
-        });
-
-        sendButton.addActionListener(e -> {
-            if(!sendMessageField.getText().trim().equalsIgnoreCase("")) {
-                try {
-                    server.sendChatMessage(client, sendMessageField.getText());
-                    sendMessageField.setText("");
-                } catch(RemoteException ex) {
-                    ex.printStackTrace();
-                }
-            } else {
-                JOptionPane.showMessageDialog(null, EMPTY_STRING_MESSAGE);
-            }
-        });
-
-        addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                try {
-                    exitApplication();
-                } catch(RemoteException ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
-
-        disableServerCommunication();
         whiteboardContainer.add(canvas);
     }
 
     @Override
     public void run() {
-        setTitle("Whiteboard");
+        setTitle(SERVER_TITLE);
         setContentPane(guiPanel);
         setLocationRelativeTo(null);
         setResizable(false);
@@ -112,30 +90,91 @@ public class GUI extends JFrame implements Runnable {
         setVisible(true);
     }
 
-    public void addDrawableFromServer(IDrawable drawable) {
+    public synchronized void onClientConnection(IClientCallback client) throws RemoteException {
+        pendingConnections.add(client);
+
+        List<String> users = new ArrayList<>();
+
+        for(IClientCallback c : pendingConnections) {
+            users.add(c.getUsername());
+        }
+
+        pendingConnectionsList.setListData(users.toArray());
+    }
+
+    public synchronized void onClientAccepted(IClientCallback client) throws RemoteException {
+        pendingConnections.remove(client);
+        clientConnections.add(client);
+        synchronizeDrawables(client);
+        synchronizeConnectedUsers();
+        client.onConnectionAccepted();
+        updateChatRoom(client.getUsername(), USER_CONNECTED_MESSAGE);
+        updatePendingConnections();
+    }
+
+    public synchronized void onClientDisconnection(IClientCallback client) throws RemoteException {
+        clientConnections.remove(client);
+        synchronizeConnectedUsers();
+        updateChatRoom(client.getUsername(), USER_DISCONNECTED_MESSAGE);
+    }
+
+    public synchronized boolean usernameIsConnected(IClientCallback client) throws RemoteException {
+        boolean isConnected = false;
+
+        for(IClientCallback c : clientConnections) {
+            if(c.getUsername().equalsIgnoreCase(client.getUsername())) {
+                isConnected = true;
+            }
+        }
+
+        return isConnected;
+    }
+
+    public synchronized void updateDrawables(IDrawable drawable) throws RemoteException {
         canvas.addDrawable(drawable);
+
+        for(IClientCallback c : clientConnections) {
+            c.sendDrawable(drawable);
+        }
     }
 
-    public void updateDrawables(List<IDrawable> drawables) {
-        canvas.addDrawableList(drawables);
+    public synchronized void synchronizeDrawables(IClientCallback client) throws RemoteException {
+        client.synchronizeDrawables(canvas.getDrawables());
     }
 
-    public void addChatMessage(String message) {
-        chatTextArea.setText(chatTextArea.getText() + "\n" + message);
+    public synchronized void updateChatRoom(String username, String message) throws RemoteException {
+        String timeStamp = new SimpleDateFormat("hh:mm aa").format(new Date());
+        String convertedMessage = timeStamp + " | " + username + ": " + message;
+        chatTextArea.setText(chatTextArea.getText() + "\n" + convertedMessage);
+
+        for(IClientCallback c : clientConnections) {
+            c.sendChatMessage(convertedMessage);
+        }
     }
 
-    public void updateConnectedUsers(List<String> users) {
+    private synchronized void synchronizeConnectedUsers() throws RemoteException {
+        List<String> users = new ArrayList<>();
+        users.add(username);
+
+        for(IClientCallback c : clientConnections) {
+            users.add(c.getUsername());
+        }
+
         connectedUsers.setListData(users.toArray());
+
+        for(IClientCallback c : clientConnections) {
+            c.synchronizeCurrentUsers(users);
+        }
     }
 
-    public void enableServerCommunication() {
-        sendMessageField.setEnabled(true);
-        sendButton.setEnabled(true);
-        chatTextArea.setText("");
-        shapeSelector.setEnabled(true);
-        colourSelector.setEnabled(true);
-        textToDraw.setEnabled(true);
-        connectionAccepted = true;
+    private synchronized void updatePendingConnections() throws RemoteException {
+        List<String> users = new ArrayList<>();
+
+        for(IClientCallback c : pendingConnections) {
+            users.add(c.getUsername());
+        }
+
+        pendingConnectionsList.setListData(users.toArray());
     }
 
     private void initializeColourSelector() {
@@ -192,19 +231,120 @@ public class GUI extends JFrame implements Runnable {
         };
     }
 
-    private void disableServerCommunication() {
-        sendMessageField.setEnabled(false);
-        sendButton.setEnabled(false);
-        chatTextArea.setText("Connection pending approval..");
-        shapeSelector.setEnabled(false);
-        colourSelector.setEnabled(false);
-        textToDraw.setEnabled(false);
+    private void initializeListeners() {
+        EventQueue.invokeLater(() -> canvas.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                super.mousePressed(e);
+                try {
+                    Drawable newDrawable;
+
+                    if(shapeSelector.getSelectedItem() == "Text") {
+                        newDrawable = new Drawable(null, colours.get((String)colourSelector.getSelectedItem()),
+                                new WhiteboardText(textToDraw.getText(), e.getX(), e.getY()));
+                    } else {
+                        newDrawable = new Drawable(getSelectedShape(e.getX() - SHAPE_OFFSET,
+                                e.getY() - SHAPE_OFFSET), colours.get((String)colourSelector.getSelectedItem()), null);
+                    }
+
+                    updateDrawables(newDrawable);
+                } catch(RemoteException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }));
+
+        EventQueue.invokeLater(() -> closeWhiteboard.addActionListener(e -> {
+            try {
+                exitApplication();
+            } catch(RemoteException | NotBoundException ex) {
+                ex.printStackTrace();
+            }
+        }));
+
+        EventQueue.invokeLater(() -> sendButton.addActionListener(e -> {
+            if(!sendMessageField.getText().trim().equalsIgnoreCase("")) {
+                try {
+                    updateChatRoom(username, sendMessageField.getText());
+                    sendMessageField.setText("");
+                } catch(RemoteException ex) {
+                    ex.printStackTrace();
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, EMPTY_STRING_MESSAGE);
+            }
+        }));
+
+        EventQueue.invokeLater(() -> newWhiteboard.addActionListener(e -> {
+            canvas.clear();
+
+            for(IClientCallback c : clientConnections) {
+                try {
+                    c.synchronizeDrawables(canvas.getDrawables());
+                    updateChatRoom(username, CLEAR_WHITEBOARD_MESSAGE);
+                } catch(RemoteException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }));
+
+        EventQueue.invokeLater(() -> {
+            connectedUsers.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            connectedUsers.addListSelectionListener(e -> {
+                String selectedUser = (String)connectedUsers.getSelectedValue();
+                for(IClientCallback c : clientConnections) {
+                    try {
+                        if(c.getUsername().equalsIgnoreCase(selectedUser)) {
+                            clientConnections.remove(c);
+                            c.onForcedDisconnect(KICKED_MESSAGE);
+                            updateChatRoom(c.getUsername(), NOTIFY_CHAT_USER_KICKED_MESSAGE);
+                            synchronizeConnectedUsers();
+                        }
+                    } catch(RemoteException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+        });
+
+        EventQueue.invokeLater(() -> pendingConnectionsList.addListSelectionListener(e -> {
+            pendingConnectionsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            String selectedUser = (String)pendingConnectionsList.getSelectedValue();
+            for(IClientCallback c : pendingConnections) {
+                try {
+                    if(c.getUsername().equalsIgnoreCase(selectedUser)) {
+                        onClientAccepted(c);
+                        synchronizeConnectedUsers();
+                    }
+                } catch(RemoteException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }));
+
+        EventQueue.invokeLater(() -> addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                try {
+                    exitApplication();
+                } catch(RemoteException | NotBoundException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }));
     }
 
-    private void exitApplication() throws RemoteException {
-        if(connectionAccepted) {
-            server.unregister(client);
+    private void exitApplication() throws RemoteException, NotBoundException {
+        for(IClientCallback c : clientConnections) {
+            c.onForcedDisconnect(SERVER_SHUTDOWN_MESSAGE);
         }
+
+        for(IClientCallback c : pendingConnections) {
+            c.onForcedDisconnect(SERVER_SHUTDOWN_MESSAGE);
+        }
+
+        registry.unbind("Whiteboard");
+        UnicastRemoteObject.unexportObject(server, true);
+
         System.exit(0);
     }
 }

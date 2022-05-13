@@ -14,11 +14,11 @@ public class WhiteboardCanvas extends JPanel {
     private static final int WIDTH = 1000;
     private static final int HEIGHT = 500;
 
-    private List<IDrawable> drawableList;
+    private final List<IDrawable> drawables;
 
     public WhiteboardCanvas() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
-        drawableList = new ArrayList<>();
+        drawables = new ArrayList<>();
         this.setBackground(Color.WHITE);
     }
 
@@ -27,7 +27,7 @@ public class WhiteboardCanvas extends JPanel {
         super.paintComponent(g);
         Graphics2D renderer = (Graphics2D)g;
 
-        for(IDrawable drawable : drawableList) {
+        for(IDrawable drawable : drawables) {
             try {
                 renderer.setColor(drawable.getColour());
                 if(drawable.isShape()) {
@@ -43,12 +43,16 @@ public class WhiteboardCanvas extends JPanel {
     }
 
     public void addDrawable(IDrawable drawable) {
-        drawableList.add(drawable);
+        drawables.add(drawable);
         repaint();
     }
 
-    public void addDrawableList(List<IDrawable> drawables) {
-        drawableList = drawables;
+    public List<IDrawable> getDrawables() {
+        return drawables;
+    }
+
+    public void clear() {
+        drawables.clear();
         repaint();
     }
 }

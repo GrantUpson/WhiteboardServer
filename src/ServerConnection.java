@@ -22,9 +22,9 @@ public class ServerConnection {
 
     public void start() throws RemoteException {
         System.setProperty(RMI_PROPERTY, hostname);
-        Registry registry = LocateRegistry.getRegistry(hostname, port); //Must be the same port assigned to registry on startup.
+        Registry registry = LocateRegistry.getRegistry(hostname, port);
 
-        Server whiteboard = new Server();
-        registry.rebind("Whiteboard", whiteboard);
+        Server server = new Server(username, registry);
+        registry.rebind("Whiteboard", server);
     }
 }

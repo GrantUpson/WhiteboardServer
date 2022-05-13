@@ -23,7 +23,6 @@ public class Launcher {
         } else {
             ServerConnection server = new ServerConnection(args[0], Integer.parseInt(args[1]), args[2]);
             server.start();
-            //GUI gui = new GUI();
         }
     }
 }

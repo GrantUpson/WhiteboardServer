@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="GUI">
-  <grid id="27dc6" binding="guiPanel" layout-manager="GridLayoutManager" row-count="9" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="guiPanel" layout-manager="GridLayoutManager" row-count="10" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="6" left="6" bottom="6" right="6"/>
     <constraints>
-      <xy x="20" y="20" width="1176" height="761"/>
+      <xy x="20" y="20" width="1176" height="802"/>
     </constraints>
     <properties>
       <font name="JetBrains Mono" size="14" style="0"/>
@@ -12,7 +12,7 @@
     <children>
       <component id="4eea1" class="javax.swing.JTextField" binding="sendMessageField">
         <constraints>
-          <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+          <grid row="9" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
             <minimum-size width="-1" height="30"/>
             <preferred-size width="-1" height="30"/>
             <maximum-size width="-1" height="30"/>
@@ -24,7 +24,7 @@
       </component>
       <component id="b26ee" class="javax.swing.JButton" binding="sendButton" default-binding="true">
         <constraints>
-          <grid row="8" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="0" fill="1" indent="0" use-parent-layout="false">
+          <grid row="9" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="0" fill="1" indent="0" use-parent-layout="false">
             <minimum-size width="-1" height="30"/>
             <preferred-size width="-1" height="30"/>
             <maximum-size width="-1" height="30"/>
@@ -37,7 +37,7 @@
       </component>
       <scrollpane id="7653a" binding="chatScrollPane">
         <constraints>
-          <grid row="7" column="0" row-span="1" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
+          <grid row="8" column="0" row-span="1" col-span="4" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
             <minimum-size width="1000" height="150"/>
             <preferred-size width="1000" height="150"/>
           </grid>
@@ -59,7 +59,7 @@
       </scrollpane>
       <grid id="a38c7" binding="whiteboardContainer" layout-manager="GridBagLayout">
         <constraints>
-          <grid row="0" column="0" row-span="7" col-span="1" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
+          <grid row="1" column="0" row-span="7" col-span="2" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
             <minimum-size width="800" height="500"/>
           </grid>
         </constraints>
@@ -72,7 +72,7 @@
       </grid>
       <component id="b2737" class="javax.swing.JComboBox" binding="shapeSelector">
         <constraints>
-          <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="2" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <font name="JetBrains Mono" size="14" style="0"/>
@@ -80,7 +80,7 @@
       </component>
       <component id="a471" class="javax.swing.JComboBox" binding="colourSelector">
         <constraints>
-          <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="1" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <font name="JetBrains Mono" size="14" style="0"/>
@@ -88,7 +88,7 @@
       </component>
       <component id="27029" class="javax.swing.JTextField" binding="textToDraw">
         <constraints>
-          <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+          <grid row="3" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
             <preferred-size width="150" height="-1"/>
           </grid>
         </constraints>
@@ -97,29 +97,20 @@
           <toolTipText value="Text to draw"/>
         </properties>
       </component>
-      <component id="a2928" class="javax.swing.JButton" binding="disconnectButton">
-        <constraints>
-          <grid row="5" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <font name="JetBrains Mono" size="14" style="0"/>
-          <text value="Disconnect"/>
-        </properties>
-      </component>
       <component id="79549" class="javax.swing.JLabel" binding="connectedUsersLabel">
         <constraints>
-          <grid row="3" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="4" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <font name="JetBrains Mono" size="14" style="0"/>
-          <text value="Connected Users"/>
+          <text value="Connected Users (Click to kick)"/>
         </properties>
       </component>
       <scrollpane id="e19d3" binding="connectedUsersScrollbar">
         <constraints>
-          <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false">
-            <preferred-size width="225" height="350"/>
-            <maximum-size width="225" height="350"/>
+          <grid row="5" column="2" row-span="1" col-span="1" vsize-policy="6" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="225" height="250"/>
+            <maximum-size width="225" height="250"/>
           </grid>
         </constraints>
         <properties>
@@ -134,6 +125,100 @@
             <properties>
               <font name="JetBrains Mono" size="14" style="0"/>
             </properties>
+          </component>
+        </children>
+      </scrollpane>
+      <grid id="2e4b2" class="javax.swing.JMenuBar" binding="menuBar" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="0">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <font name="JetBrains Mono" size="14" style="0"/>
+        </properties>
+        <border type="none"/>
+        <children>
+          <grid id="b250" class="javax.swing.JMenu" binding="menuDropdown" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="1">
+            <constraints/>
+            <properties>
+              <font name="JetBrains Mono" size="14" style="0"/>
+              <horizontalAlignment value="0"/>
+              <horizontalTextPosition value="0"/>
+              <text value="File"/>
+            </properties>
+            <border type="none"/>
+            <children>
+              <component id="1e21c" class="javax.swing.JMenuItem" binding="newWhiteboard">
+                <constraints/>
+                <properties>
+                  <font name="JetBrains Mono" size="14" style="0"/>
+                  <horizontalAlignment value="2"/>
+                  <horizontalTextPosition value="0"/>
+                  <text value="New"/>
+                </properties>
+              </component>
+              <component id="8e1c9" class="javax.swing.JMenuItem" binding="openWhiteboard">
+                <constraints/>
+                <properties>
+                  <font name="JetBrains Mono" size="14" style="0"/>
+                  <horizontalAlignment value="2"/>
+                  <horizontalTextPosition value="0"/>
+                  <text value="Open"/>
+                </properties>
+              </component>
+              <component id="c834f" class="javax.swing.JMenuItem" binding="saveWhiteboard">
+                <constraints/>
+                <properties>
+                  <font name="JetBrains Mono" size="14" style="0"/>
+                  <horizontalAlignment value="2"/>
+                  <horizontalTextPosition value="0"/>
+                  <text value="Save"/>
+                </properties>
+              </component>
+              <component id="82da5" class="javax.swing.JMenuItem" binding="saveAsWhiteboard">
+                <constraints/>
+                <properties>
+                  <font name="JetBrains Mono" size="14" style="0"/>
+                  <horizontalAlignment value="2"/>
+                  <horizontalTextPosition value="0"/>
+                  <text value="Save As"/>
+                </properties>
+              </component>
+              <component id="425cb" class="javax.swing.JMenuItem" binding="closeWhiteboard">
+                <constraints/>
+                <properties>
+                  <font name="JetBrains Mono" size="14" style="0"/>
+                  <horizontalAlignment value="2"/>
+                  <horizontalTextPosition value="2"/>
+                  <text value="Close"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+        </children>
+      </grid>
+      <component id="3139e" class="javax.swing.JLabel" binding="pendingUsersLabel">
+        <constraints>
+          <grid row="6" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <font name="JetBrains Mono" size="14" style="0"/>
+          <text value="Pending Connections"/>
+        </properties>
+      </component>
+      <scrollpane id="5bdf0" binding="pendingConnectionsPane">
+        <constraints>
+          <grid row="7" column="2" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <minimum-size width="225" height="100"/>
+            <preferred-size width="225" height="100"/>
+            <maximum-size width="225" height="100"/>
+          </grid>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="53bb2" class="javax.swing.JList" binding="pendingConnectionsList">
+            <constraints/>
+            <properties/>
           </component>
         </children>
       </scrollpane>
