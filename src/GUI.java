@@ -102,6 +102,11 @@ public class GUI extends JFrame implements Runnable {
         pendingConnectionsList.setListData(users.toArray());
     }
 
+    public synchronized void onClientTerminateRequest(IClientCallback client) throws RemoteException {
+        pendingConnections.remove(client);
+        updatePendingConnections();
+    }
+
     public synchronized void onClientAccepted(IClientCallback client) throws RemoteException {
         pendingConnections.remove(client);
         clientConnections.add(client);

@@ -10,6 +10,7 @@ import java.rmi.RemoteException;
 public interface IWhiteboardServer extends Remote {
     boolean connect(IClientCallback client) throws RemoteException;
     void disconnect(IClientCallback client) throws RemoteException;
+    void terminateRequest(IClientCallback client) throws RemoteException;
     void sendChatMessage(IClientCallback client, String message) throws RemoteException;
     void sendDrawable(IDrawable drawable) throws RemoteException;
 }

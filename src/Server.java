@@ -35,6 +35,11 @@ public class Server extends UnicastRemoteObject implements IWhiteboardServer {
     }
 
     @Override
+    public void terminateRequest(IClientCallback client) throws RemoteException {
+        gui.onClientTerminateRequest(client);
+    }
+
+    @Override
     public void sendChatMessage(IClientCallback client, String message) throws RemoteException {
         gui.updateChatRoom(client.getUsername(), message);
     }
