@@ -9,10 +9,9 @@ import java.rmi.registry.Registry;
 
 
 public class ServerConnection {
-    private static final String RMI_PROPERTY = "java.rmi.server.hostname";
-    private String hostname;
-    private int port;
-    private String username;
+    private final String hostname;
+    private final int port;
+    private final String username;
 
     public ServerConnection(String hostname, int port, String username) {
         this.hostname = hostname;
@@ -21,9 +20,7 @@ public class ServerConnection {
     }
 
     public void start() throws RemoteException {
-        System.setProperty(RMI_PROPERTY, hostname);
         Registry registry = LocateRegistry.getRegistry(hostname, port);
-
         Server server = new Server(username, registry);
         registry.rebind("Whiteboard", server);
     }

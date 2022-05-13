@@ -5,7 +5,6 @@
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import javax.swing.*;
-import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
 
 
@@ -14,7 +13,7 @@ public class Launcher {
     private static final String INCORRECT_ARGUMENTS_RESPONSE =
             "Incorrect number of arguments. Usage: java -jar WhiteboardServer.jar <registry-hostname> <registry-port> <username>";
 
-    public static void main(String[] args) throws AlreadyBoundException, RemoteException {
+    public static void main(String[] args) throws RemoteException {
         //Skins the GUI to a dark theme.
         FlatDarkLaf.setup();
 

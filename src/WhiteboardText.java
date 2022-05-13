@@ -1,4 +1,10 @@
+/*
+ * Name: Grant Upson
+ * ID: 1225133
+ */
+
 import java.io.Serializable;
+
 
 public class WhiteboardText implements Serializable {
     private final String text;

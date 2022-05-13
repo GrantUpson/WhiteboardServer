@@ -17,9 +17,10 @@ public class Server extends UnicastRemoteObject implements IWhiteboardServer {
     }
 
     @Override
-    public synchronized boolean connect(IClientCallback client) throws RemoteException {
+    public boolean connect(IClientCallback client) throws RemoteException {
        boolean connected = false;
 
+       //Ensures unique usernames
         if(!gui.usernameIsConnected(client)) {
             connected = true;
             gui.onClientConnection(client);
@@ -29,17 +30,17 @@ public class Server extends UnicastRemoteObject implements IWhiteboardServer {
     }
 
     @Override
-    public synchronized void disconnect(IClientCallback client) throws RemoteException {
+    public void disconnect(IClientCallback client) throws RemoteException {
         gui.onClientDisconnection(client);
     }
 
     @Override
-    public synchronized void sendChatMessage(IClientCallback client, String message) throws RemoteException {
+    public void sendChatMessage(IClientCallback client, String message) throws RemoteException {
         gui.updateChatRoom(client.getUsername(), message);
     }
 
     @Override
-    public synchronized void sendDrawable(IDrawable drawable) throws RemoteException {
+    public void sendDrawable(IDrawable drawable) throws RemoteException {
         gui.updateDrawables(drawable);
     }
 }
