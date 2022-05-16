@@ -14,7 +14,7 @@ public class WhiteboardCanvas extends JPanel {
     private static final int WIDTH = 1000;
     private static final int HEIGHT = 500;
 
-    private final List<IDrawable> drawables;
+    private List<IDrawable> drawables;
 
     public WhiteboardCanvas() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -53,6 +53,11 @@ public class WhiteboardCanvas extends JPanel {
 
     public void clear() {
         drawables.clear();
+        repaint();
+    }
+
+    public void loadCanvas(List<IDrawable> drawables) {
+        this.drawables = drawables;
         repaint();
     }
 }

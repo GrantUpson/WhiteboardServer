@@ -10,6 +10,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
+import java.io.*;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
@@ -22,6 +23,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GUI extends JFrame implements Runnable {
     private static final String SERVER_TITLE = "Whiteboard Server";
+    private static final String FILE_CORRUPT = "Cannot load whiteboard file, it may be empty or corrupt";
+    private static final String WHITEBOARD_LOADED = " was loaded";
+    private static final String WHITEBOARD_SAVED = " was saved";
     private static final String SERVER_SHUTDOWN_MESSAGE = "The whiteboard server has been shutdown";
     private static final String EMPTY_STRING_MESSAGE = "You cannot send an empty chat message";
     private static final String CLEAR_WHITEBOARD_MESSAGE = "The whiteboard has been cleared";
@@ -29,7 +33,13 @@ public class GUI extends JFrame implements Runnable {
     private static final String USER_CONNECTED_MESSAGE = "Has connected";
     private static final String USER_DISCONNECTED_MESSAGE = "Has disconnected";
     private static final String NOTIFY_CHAT_USER_KICKED_MESSAGE = "Has been kicked from the server";
+
     private static final int SHAPE_OFFSET = 35;
+    private static final String RECTANGLE_SELECTOR = "Rectangle";
+    private static final String CIRCLE_SELECTOR = "Circle";
+    private static final String TRIANGLE_SELECTOR = "Triangle";
+    private static final String LINE_SELECTOR = "Line";
+    private static final String TEXT_SELECTOR = "Text";
 
     private Map<String, Color> colours;
     private final List<IClientCallback> clientConnections;
@@ -37,6 +47,7 @@ public class GUI extends JFrame implements Runnable {
     private final String username;
     private final Registry registry;
     private final Server server;
+    private String currentWhiteboardLocation;
 
     private JPanel guiPanel;
     private JTextField sendMessageField;
@@ -70,6 +81,7 @@ public class GUI extends JFrame implements Runnable {
         clientConnections = new CopyOnWriteArrayList<>();
         pendingConnections = new CopyOnWriteArrayList<>();
         canvas = new WhiteboardCanvas();
+        currentWhiteboardLocation = "";
 
         initializeColourSelector();
         createShapeSelector();
@@ -219,19 +231,19 @@ public class GUI extends JFrame implements Runnable {
     }
 
     private void createShapeSelector() {
-        shapeSelector.addItem("Rectangle");
-        shapeSelector.addItem("Triangle");
-        shapeSelector.addItem("Circle");
-        shapeSelector.addItem("Line");
-        shapeSelector.addItem("Text");
+        shapeSelector.addItem(RECTANGLE_SELECTOR);
+        shapeSelector.addItem(TRIANGLE_SELECTOR);
+        shapeSelector.addItem(CIRCLE_SELECTOR);
+        shapeSelector.addItem(LINE_SELECTOR);
+        shapeSelector.addItem(TEXT_SELECTOR);
     }
 
     private Shape getSelectedShape(int x, int y) {
         return switch((String) Objects.requireNonNull(shapeSelector.getSelectedItem())) {
-            case "Rectangle" -> new Rectangle(x, y, 100, 50);
-            case "Circle" -> new Ellipse2D.Double(x, y, 75, 75);
-            case "Triangle" -> new Triangle(x, y, 75, 75);
-            case "Line" -> new Rectangle(x, y, 200, 4);
+            case RECTANGLE_SELECTOR -> new Rectangle(x, y, 100, 50);
+            case CIRCLE_SELECTOR -> new Ellipse2D.Double(x, y, 75, 75);
+            case TRIANGLE_SELECTOR -> new Triangle(x, y, 75, 75);
+            case LINE_SELECTOR -> new Rectangle(x, y, 200, 4);
             default -> null;
         };
     }
@@ -244,7 +256,7 @@ public class GUI extends JFrame implements Runnable {
                 try {
                     Drawable newDrawable;
 
-                    if(shapeSelector.getSelectedItem() == "Text") {
+                    if(shapeSelector.getSelectedItem() == TEXT_SELECTOR) {
                         newDrawable = new Drawable(null, colours.get((String)colourSelector.getSelectedItem()),
                                 new WhiteboardText(textToDraw.getText(), e.getX(), e.getY()));
                     } else {
@@ -268,7 +280,7 @@ public class GUI extends JFrame implements Runnable {
         }));
 
         EventQueue.invokeLater(() -> sendButton.addActionListener(e -> {
-            if(!sendMessageField.getText().trim().equalsIgnoreCase("")) {
+            if(!sendMessageField.getText().trim().isEmpty()) {
                 try {
                     updateChatRoom(username, sendMessageField.getText());
                     sendMessageField.setText("");
@@ -291,6 +303,55 @@ public class GUI extends JFrame implements Runnable {
                     ex.printStackTrace();
                 }
             }
+        }));
+
+        EventQueue.invokeLater(() -> saveWhiteboard.addActionListener(e -> {
+            new Thread(() -> {
+                if(!currentWhiteboardLocation.isEmpty()) {
+                       saveFile(new File(currentWhiteboardLocation));
+                } else {
+                    try {
+                        saveAsFile();
+                    } catch(RemoteException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }).start();
+        }));
+
+        EventQueue.invokeLater(() -> saveAsWhiteboard.addActionListener(e -> {
+            new Thread(() -> {
+                try {
+                    saveAsFile();
+                } catch(RemoteException ex) {
+                    ex.printStackTrace();
+                }
+            }).start();
+        }));
+
+        EventQueue.invokeLater(() -> openWhiteboard.addActionListener(e -> {
+            new Thread(() -> {
+                final JFileChooser fc = new JFileChooser();
+                int chosenOption = fc.showOpenDialog(null);
+
+                if(chosenOption == JFileChooser.APPROVE_OPTION) {
+                    File whiteboardFile = fc.getSelectedFile();
+                    try(FileInputStream streamInput = new FileInputStream(whiteboardFile);
+                    ObjectInputStream objectSteam = new ObjectInputStream(streamInput)) {
+                        List<IDrawable> loadedDrawables = (List<IDrawable>) objectSteam.readObject();
+                        canvas.loadCanvas(loadedDrawables);
+
+                        for(IClientCallback c : clientConnections) {
+                            c.synchronizeDrawables(loadedDrawables);
+                        }
+
+                        updateChatRoom(username, whiteboardFile.getName() + WHITEBOARD_LOADED);
+
+                    } catch(IOException | ClassNotFoundException ex) {
+                        JOptionPane.showMessageDialog(null, FILE_CORRUPT);
+                    }
+                }
+            }).start();
         }));
 
         EventQueue.invokeLater(() -> {
@@ -336,6 +397,35 @@ public class GUI extends JFrame implements Runnable {
                 }
             }
         }));
+    }
+
+    private void saveAsFile() throws RemoteException {
+        JFileChooser fileChooser = new JFileChooser();
+        int option = fileChooser.showSaveDialog(null);
+        if(option == JFileChooser.APPROVE_OPTION) {
+            File whiteboardFile = fileChooser.getSelectedFile();
+            currentWhiteboardLocation = whiteboardFile.getPath();
+            saveFile(whiteboardFile);
+            updateChatRoom(username, whiteboardFile.getName() + WHITEBOARD_SAVED);
+        }
+    }
+
+    private void saveFile(File file) {
+        try(FileOutputStream writer = new FileOutputStream(file);
+            ObjectOutputStream objectWriter = new ObjectOutputStream(writer)) {
+
+            List<IDrawable> drawables = canvas.getDrawables();
+            List<IDrawable> notReferencedDrawables = new ArrayList<>();
+
+            //This must be done, or there will be reference errors due to RMI
+            for(IDrawable c : drawables) {
+                notReferencedDrawables.add(new Drawable(c.getShape(), c.getColour(), c.getWhiteboardText()));
+            }
+
+            objectWriter.writeObject(notReferencedDrawables);
+        } catch(IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
     private void exitApplication() throws RemoteException, NotBoundException {
