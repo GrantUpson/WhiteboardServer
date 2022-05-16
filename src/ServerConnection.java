@@ -20,6 +20,7 @@ public class ServerConnection {
     }
 
     public void start() throws RemoteException {
+        LocateRegistry.createRegistry(port);
         Registry registry = LocateRegistry.getRegistry(hostname, port);
         Server server = new Server(username, registry);
         registry.rebind("Whiteboard", server);
